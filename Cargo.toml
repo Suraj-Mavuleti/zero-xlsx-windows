@@ -3,3 +3,5 @@ name = "zero-xlsx-windows"
 version = "1.0.0"
 edition = "2021"
 description = "Native Windows client for zero-xlsx"
+
+# deps bumped
