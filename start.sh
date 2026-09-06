@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 zero-xlsx.py
+python3 zero-xlsx.py "$@"
