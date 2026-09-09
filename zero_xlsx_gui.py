@@ -1,100 +1,148 @@
-import customtkinter as ctk
-import threading
-import time
-import math
-import socket
-import urllib.request
-import json
-import sqlite3
-import random
+import sys
+import gi
+import os
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk, GLib, Pango
 
-ctk.set_appearance_mode("dark")
-
-class App(ctk.CTk):
+class ZeroXLSX(Gtk.Window):
     def __init__(self):
-        super().__init__()
-        self.title("Data Grid Analytics")
-        self.geometry("1100x750")
+        super().__init__(title="Zero XLSX - Ultimate Studio")
+        self.set_default_size(1300, 800)
         
-        # Premium Enterprise Color Palette
-        self.bg_color = "#0B0C10"          # Deep rich black/gray
-        self.sidebar_color = "#1F2833"     # Slate gray sidebar
-        self.accent_color = "#66FCF1"      # Neon cyan accent
-        self.text_primary = "#FFFFFF"      # Crisp white
-        self.text_secondary = "#C5C6C7"    # Soft gray text
-        self.panel_bg = "#161920"          # Slightly raised panel
+        self.header = Gtk.HeaderBar()
+        self.header.set_show_close_button(True)
+        self.header.props.title = ""
+        self.header.get_style_context().add_class("hidden-header")
+        self.set_titlebar(self.header)
         
-        self.configure(fg_color=self.bg_color)
+        self.setup_css()
         
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(main_box)
         
-        # Sidebar Navigation
-        self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0, fg_color=self.sidebar_color)
-        self.sidebar.grid(row=0, column=0, sticky="nsew")
-        self.sidebar.grid_rowconfigure(5, weight=1)
+        # ================= TOP RIBBON =================
+        ribbon = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        ribbon.get_style_context().add_class("ribbon")
+        main_box.pack_start(ribbon, False, False, 0)
         
-        # Branding
-        self.logo_label = ctk.CTkLabel(self.sidebar, text="XLSX", font=ctk.CTkFont("Segoe UI", size=26, weight="bold"), text_color=self.accent_color)
-        self.logo_label.grid(row=0, column=0, padx=25, pady=(35, 5), sticky="w")
+        logo = Gtk.Label(label="Z E R O X L S X")
+        logo.get_style_context().add_class("logo")
+        logo.set_margin_start(20)
+        logo.set_margin_end(30)
+        ribbon.pack_start(logo, False, False, 0)
         
-        self.version_label = ctk.CTkLabel(self.sidebar, text="Enterprise Edition v8.5", font=ctk.CTkFont("Segoe UI", size=12), text_color=self.text_secondary)
-        self.version_label.grid(row=1, column=0, padx=25, pady=(0, 35), sticky="w")
+        tools = ["B", "I", "U", "A", "🎨", "💰", "%,", ".00", "📊", "Σ"]
+        tbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        tbox.set_valign(Gtk.Align.CENTER)
         
-        # Nav Buttons
-        self.btn_dash = ctk.CTkButton(self.sidebar, text="  Overview", font=ctk.CTkFont("Segoe UI", size=14, weight="bold"), fg_color=self.panel_bg, text_color=self.text_primary, anchor="w", hover_color=self.accent_color)
-        self.btn_dash.grid(row=2, column=0, padx=15, pady=8, sticky="ew")
-        
-        self.btn_set = ctk.CTkButton(self.sidebar, text="  Configuration", font=ctk.CTkFont("Segoe UI", size=14), fg_color="transparent", text_color=self.text_secondary, anchor="w", hover_color=self.panel_bg)
-        self.btn_set.grid(row=3, column=0, padx=15, pady=8, sticky="ew")
-        
-        self.btn_logs = ctk.CTkButton(self.sidebar, text="  Diagnostics", font=ctk.CTkFont("Segoe UI", size=14), fg_color="transparent", text_color=self.text_secondary, anchor="w", hover_color=self.panel_bg)
-        self.btn_logs.grid(row=4, column=0, padx=15, pady=8, sticky="ew")
-        
-        # Main Work Area
-        self.main_view = ctk.CTkFrame(self, fg_color=self.bg_color, corner_radius=0)
-        self.main_view.grid(row=0, column=1, sticky="nsew", padx=30, pady=30)
-        
-        self.header = ctk.CTkLabel(self.main_view, text="Data Grid Analytics", font=ctk.CTkFont("Segoe UI", size=32, weight="bold"), text_color=self.text_primary)
-        self.header.pack(anchor="w", pady=(0, 20))
-        
-        # Premium Content Glass Panel
-        self.main_frame = ctk.CTkFrame(self.main_view, fg_color=self.panel_bg, corner_radius=15, border_width=1, border_color="#2A2F3A")
-        self.main_frame.pack(fill=ctk.BOTH, expand=True)
-        
-        self.setup_ui()
-        
-    
-    def setup_ui(self):
-        self.cells = {}
-        grid = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        grid.pack(fill=ctk.BOTH, expand=True, padx=25, pady=25)
-        
-        headers = ["A", "B", "C", "D", "E", "F"]
-        for c, h in enumerate(headers):
-            grid.columnconfigure(c, weight=1)
-            lbl = ctk.CTkLabel(grid, text=h, font=ctk.CTkFont(weight="bold"), text_color=self.accent_color)
-            lbl.grid(row=0, column=c, pady=(0, 10))
+        for t in tools:
+            btn = Gtk.Button(label=t)
+            btn.get_style_context().add_class("format-btn")
+            tbox.pack_start(btn, False, False, 0)
             
-        for r in range(1, 11):
-            grid.rowconfigure(r, weight=1)
-            for c in range(6):
-                entry = ctk.CTkEntry(grid, justify="center", font=ctk.CTkFont(size=14), fg_color="#101217", border_color="#2A2F3A")
-                entry.grid(row=r, column=c, sticky="nsew", padx=2, pady=2)
-                self.cells[(r, c)] = entry
-                
-        btn = ctk.CTkButton(self.main_frame, text="∑ Auto-Sum Column A", font=ctk.CTkFont(weight="bold"), fg_color=self.accent_color, text_color="#000000", hover_color="#45A29E", corner_radius=8, height=40, command=self.calc)
-        btn.pack(pady=(0, 25))
+        ribbon.pack_start(tbox, False, False, 0)
         
-    def calc(self):
-        total = 0
-        for r in range(1, 10):
-            val = self.cells[(r, 0)].get()
-            if val.replace('.','',1).isdigit(): total += float(val)
-        self.cells[(10, 0)].delete(0, "end")
-        self.cells[(10, 0)].insert(0, str(total))
+        btn_export = Gtk.Button(label="📤 Export CSV")
+        btn_export.get_style_context().add_class("action-btn")
+        btn_export.set_valign(Gtk.Align.CENTER)
+        btn_export.set_margin_end(20)
+        ribbon.pack_end(btn_export, False, False, 0)
+        
+        # ================= FORMULA BAR =================
+        fx_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        fx_bar.get_style_context().add_class("fx-bar")
+        main_box.pack_start(fx_bar, False, False, 0)
+        
+        l_fx = Gtk.Label(label="fx")
+        l_fx.get_style_context().add_class("fx-label")
+        l_fx.set_margin_start(20)
+        l_fx.set_margin_end(10)
+        fx_bar.pack_start(l_fx, False, False, 0)
+        
+        entry_fx = Gtk.Entry()
+        entry_fx.set_text("=SUM(B2:B10) * 1.05")
+        entry_fx.get_style_context().add_class("fx-entry")
+        fx_bar.pack_start(entry_fx, True, True, 20)
+        
+        # ================= SPREADSHEET GRID =================
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        main_box.pack_start(scroll, True, True, 0)
+        
+        grid = Gtk.Grid()
+        grid.get_style_context().add_class("sheet-grid")
+        
+        # Header Row
+        cols = ["", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        for j, c in enumerate(cols):
+            lbl = Gtk.Label(label=c)
+            lbl.get_style_context().add_class("grid-header")
+            if j == 0: lbl.set_size_request(50, 30)
+            else: lbl.set_size_request(120, 30)
+            grid.attach(lbl, j, 0, 1, 1)
+            
+        # Rows
+        data = [
+            ["1", "Revenue", "$14,500.00", "Q1", "Up", "", "", "", "", "", ""],
+            ["2", "Expenses", "$8,200.00", "Q1", "Down", "", "", "", "", "", ""],
+            ["3", "Net Profit", "$6,300.00", "Q1", "Up", "", "", "", "", "", ""],
+            ["4", "Growth", "+15.4%", "", "", "", "", "", "", "", ""]
+        ]
+        
+        for i in range(1, 25):
+            lbl = Gtk.Label(label=str(i))
+            lbl.get_style_context().add_class("grid-header")
+            lbl.set_size_request(50, 30)
+            grid.attach(lbl, 0, i, 1, 1)
+            
+            for j in range(1, 11):
+                entry = Gtk.Entry()
+                entry.get_style_context().add_class("cell")
+                if i <= len(data) and j < len(data[i-1]):
+                    entry.set_text(data[i-1][j])
+                grid.attach(entry, j, i, 1, 1)
+                
+        scroll.add(grid)
+        
+        # ================= BOTTOM TAB BAR =================
+        bot_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        bot_bar.get_style_context().add_class("bot-bar")
+        main_box.pack_start(bot_bar, False, False, 0)
+        
+        for name in ["Sheet1", "Sheet2", "+"]:
+            btn = Gtk.Button(label=name)
+            btn.get_style_context().add_class("sheet-tab")
+            if name == "Sheet1": btn.get_style_context().add_class("sheet-tab-active")
+            bot_bar.pack_start(btn, False, False, 0)
 
+    def setup_css(self):
+        css = b'''
+            window { background-color: #030305; }
+            .hidden-header { background: #030305; min-height: 0px; padding: 0px; border: none; box-shadow: none; }
+            .ribbon { background-color: rgba(10, 12, 18, 0.98); border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px 0px; }
+            .logo { color: #FFFFFF; font-size: 20px; font-weight: 900; letter-spacing: 5px; text-shadow: 0 0 15px rgba(0, 204, 102, 0.6); }
+            .format-btn { background: transparent; color: #FFFFFF; border: 1px solid transparent; border-radius: 8px; font-weight: bold; padding: 8px 12px; transition: all 0.2s ease; }
+            .format-btn:hover { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+            .action-btn { background: linear-gradient(45deg, #00CC66, #00994C); color: #FFFFFF; border-radius: 8px; font-weight: bold; padding: 8px 15px; border: none; box-shadow: 0 5px 15px rgba(0, 204, 102, 0.3); transition: all 0.3s; }
+            .action-btn:hover { box-shadow: 0 8px 25px rgba(0, 204, 102, 0.5); }
+            .fx-bar { background-color: #0A0D14; padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+            .fx-label { color: #00CC66; font-family: serif; font-size: 20px; font-style: italic; font-weight: bold; }
+            .fx-entry { background: #1C2333; color: #FFFFFF; border: 1px solid rgba(0,204,102,0.3); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 14px; }
+            .sheet-grid { background-color: #030305; }
+            .grid-header { background: #10141E; color: #8B94A5; border: 1px solid #1C2333; font-weight: bold; font-size: 12px; }
+            .cell { background: #050608; color: #FFFFFF; border: 1px solid #10141E; padding: 5px; box-shadow: none; border-radius: 0; font-size: 13px; }
+            .cell:focus { border: 2px solid #00CC66; background: rgba(0,204,102,0.05); }
+            .bot-bar { background-color: #080A0F; border-top: 1px solid rgba(255, 255, 255, 0.05); }
+            .sheet-tab { background: transparent; color: #8B94A5; border: none; padding: 10px 20px; font-weight: bold; border-radius: 0; border-right: 1px solid #1C2333; }
+            .sheet-tab:hover { background: rgba(255,255,255,0.05); color: #FFFFFF; }
+            .sheet-tab-active { background: #10141E; color: #00CC66; border-bottom: 2px solid #00CC66; }
+        '''
+        provider = Gtk.CssProvider()
+        provider.load_from_data(css)
+        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+    win = ZeroXLSX()
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
